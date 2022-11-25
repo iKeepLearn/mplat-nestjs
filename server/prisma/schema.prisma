@@ -1,0 +1,134 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Authorizer 授权账号
+model Authorizer {
+  id            Int      @id @default(autoincrement())
+  appid         String   @unique
+  app_type      Int
+  service_type  Int
+  nickname      String
+  username      String
+  headimg       String
+  qrcodeurl     String
+  principalname String
+  refreshtoken  String
+  funcinfo      String
+  verifyinfo    Int
+  auth_time     DateTime
+
+  @@map("authorizer")
+}
+
+// WxCallbackComponentRecord 第三方授权事件的记录
+model WxCallbackComponentRecord {
+  id           Int      @id @default(autoincrement())
+  receive_time DateTime
+  create_time  DateTime @default(now())
+  info_type    String
+  post_body    String
+
+  @@index([receive_time])
+  @@map("wx_callback_component_record")
+}
+
+// WxCallbackBizRecord 小程序授权事件记录
+model WxCallbackBizRecord {
+  id           Int      @id @default(autoincrement())
+  receive_time DateTime
+  create_time  DateTime @default(now())
+  appid        String
+  to_user_name String
+  msg_type     String
+  event        String
+  info_type    String
+  post_body    String
+
+  @@index([receive_time])
+  @@map("wx_callback_biz_record")
+}
+
+// WxCallbackRule 回调消息转发规则
+model WxCallbackRule {
+  id          Int      @id @default(autoincrement())
+  update_time DateTime @updatedAt
+  create_time DateTime @default(now())
+  name        String
+  type        Int
+  msg_type    String
+  event       String
+  info_type   String
+  info        String
+  open        Int
+  post_body   String
+
+  @@unique([info_type, msg_type, event])
+  @@map("wx_callback_rule")
+}
+
+// HttpProxyConfig http转发配置
+model HttpProxyConfig {
+  id   Int    @id @default(autoincrement())
+  port Int
+  path String
+
+  @@map("http_proxy_config")
+}
+
+// UserRecord 用户信息
+model UserRecord {
+  id          Int      @id @default(autoincrement()) // 唯一ID
+  username    String   @unique // 用户名
+  password    String // 密码md5
+  create_time DateTime @default(now()) // 创建时间
+  update_time DateTime @updatedAt // 更新时间
+
+  @@map("user_record")
+}
+
+// WxToken 微信相关的token
+model WxToken {
+  id          Int      @id @default(autoincrement()) // 唯一ID
+  create_time DateTime @default(now()) // 创建时间
+  update_time DateTime @updatedAt // 更新时间
+  type        String
+  appid       String
+  token       String
+  expire_time DateTime
+
+  @@unique([appid, type])
+  @@index([appid, type])
+  @@map("wx_token")
+}
+
+// CommKv 通用的kv
+model CommKv {
+  id          Int      @id @default(autoincrement()) // 唯一ID
+  create_time DateTime @default(now()) // 创建时间
+  update_time DateTime @updatedAt // 更新时间
+  key         String   @unique
+  value       String
+
+  @@map("comm_kv")
+}
+
+// Counter 计数器
+model Counter {
+  id          Int      @id @default(autoincrement()) // 唯一ID
+  create_time DateTime @default(now()) // 创建时间
+  update_time DateTime @updatedAt // 更新时间
+  key         String   @unique
+  value       Int
+
+  @@map("counter")
+}
