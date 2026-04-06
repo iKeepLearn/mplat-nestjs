@@ -1,0 +1,29 @@
+[package]
+name = "actix-extensible-rate-limit"
+version = "1.0.1"
+edition = "2024"
+
+[dependencies]
+actix-web.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+futures.workspace = true
+tracing.workspace = true
+serde.workspace = true
+chrono.workspace = true
+dashmap.workspace = true
+
+
+redis = { version = "1.1.0", default-features = false, features = [
+  "tokio-comp",
+  "aio",
+  "connection-manager",
+], optional = true }
+
+[dev-dependencies]
+tokio = { version = "1.50.0", features = ["time", "test-util"] }
+
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

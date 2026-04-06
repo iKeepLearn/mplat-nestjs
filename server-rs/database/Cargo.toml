@@ -1,0 +1,18 @@
+[package]
+name = "database"
+version = "1.0.1"
+edition = "2024"
+
+[dependencies]
+sqlx.workspace = true
+chrono.workspace = true
+serde.workspace = true
+tracing.workspace = true
+validator.workspace = true
+uuid.workspace = true
+serde-aux.workspace = true
+serde_json.workspace = true
+rust_decimal.workspace = true
+utils.workspace = true
+error.workspace = true
+structs.workspace = true

@@ -1,0 +1,32 @@
+[package]
+name = "routes"
+version = "1.0.1"
+edition = "2024"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+tracing.workspace = true
+actix-web.workspace = true
+jsonwebtoken.workspace = true
+itertools.workspace = true
+sqlx.workspace = true
+futures.workspace = true 
+actix-multipart.workspace = true
+validator.workspace = true
+serde-aux.workspace = true
+error.workspace = true
+utils.workspace = true
+service.workspace = true
+config.workspace = true
+database.workspace = true
+strum.workspace = true
+actix-extensible-rate-limit.workspace = true
+structs.workspace = true
+futures-util.workspace = true
+tokio.workspace = true
+dashmap.workspace = true
+
+enum-map = { version = "2.7" }
+serde_qs = { version = "1.1.0", features = ["actix-web4", "actix4"]}

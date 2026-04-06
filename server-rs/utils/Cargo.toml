@@ -1,0 +1,17 @@
+[package]
+name = "utils"
+version = "1.0.1"
+edition = "2024"
+
+[dependencies]
+chrono.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+strum.workspace = true
+actix-web.workspace = true
+error.workspace = true
+actix-extensible-rate-limit.workspace = true
+tracing.workspace = true
+
+enum-map = { version = "2.7" }
+tempfile = "3.23.0"

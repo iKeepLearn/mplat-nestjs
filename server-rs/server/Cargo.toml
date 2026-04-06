@@ -1,0 +1,44 @@
+[package]
+name = "mplat-server"
+version = "1.0.1"
+edition = "2024"
+
+[dependencies]
+tokio.workspace = true
+uuid.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+chrono.workspace = true
+tracing.workspace = true
+tracing-log.workspace = true
+tracing-subscriber.workspace = true
+dotenv.workspace = true
+bytes.workspace = true
+futures.workspace = true
+serde-aux.workspace = true
+strum.workspace = true
+actix-web.workspace = true
+sqlx.workspace = true
+validator.workspace = true
+jsonwebtoken.workspace = true
+itertools.workspace = true
+systemd-service.workspace = true
+database.workspace = true
+error.workspace = true
+utils.workspace = true
+service.workspace = true
+config.workspace = true
+routes.workspace = true
+actix-extensible-rate-limit.workspace = true
+lazy_static.workspace = true
+
+tracing-bunyan-formatter = "0.3.1"
+tracing-actix-web = "0.7"
+actix-service = "2"
+actix-cors = "0.7"
+url = "2.5"
+clap = { version = "4.5.48", features = ["derive"] }
+enum-map = { version = "2.7" }
+
+
