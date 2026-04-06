@@ -1,13 +1,15 @@
+mod admin;
 mod user;
 
 pub mod middleware;
 
 use crate::middleware::rate_limit::RateLimit;
 use actix_web::web;
-use actix_web::{http::header::ContentType, HttpRequest, HttpResponse, Responder};
-use serde::Serialize;
+use actix_web::{HttpRequest, HttpResponse, Responder, http::header::ContentType};
+use admin::configure_admin_routes;
 use config::AppConfig;
 use database::Repository;
+use serde::Serialize;
 use service::Service;
 use sqlx::{Pool, Postgres};
 use user::configure_auth_routes;
@@ -29,13 +31,6 @@ impl AppState {
         }
     }
 }
-
-pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
-    configure_auth_routes(cfg, rate_limit);
-}
-
-
-
 
 // 使用 untagged 宏，序列化出来的 JSON 不会带有 "Success" 或 "Error" 的外壳
 #[derive(Serialize)]
@@ -82,8 +77,12 @@ impl<T: Serialize> Responder for ApiResponse<T> {
             Ok(body) => HttpResponse::Ok()
                 .content_type(ContentType::json())
                 .body(body),
-            Err(_) => HttpResponse::InternalServerError()
-                .body("JSON Serialization Error"),
+            Err(_) => HttpResponse::InternalServerError().body("JSON Serialization Error"),
         }
     }
+}
+
+pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
+    configure_admin_routes(cfg, rate_limit);
+    configure_auth_routes(cfg, rate_limit);
 }

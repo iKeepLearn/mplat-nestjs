@@ -1,8 +1,10 @@
 mod user;
+mod admin;
 
 use sqlx::{Pool, Postgres};
 use std::sync::Arc;
 use user::UserRepository;
+use admin::AdminRepository;
 
 #[derive(Debug)]
 pub struct Repository(Arc<RepositoryInner>);
@@ -10,6 +12,7 @@ pub struct Repository(Arc<RepositoryInner>);
 #[derive(Debug, Clone)]
 pub struct RepositoryInner {
     pub user: UserRepository,
+    pub admin: AdminRepository,
 }
 
 impl Clone for Repository {
@@ -30,6 +33,7 @@ impl Repository {
     pub fn new(pool: Pool<Postgres>) -> Self {
         let inner = RepositoryInner {
             user: UserRepository::new(pool.clone()),
+            admin: AdminRepository::new(pool.clone()),
         };
 
         Repository(Arc::new(inner))

@@ -3,7 +3,6 @@ use config::{AppConfig, DEFAULT_DB_URL, DEFAULT_PORT, ENV_DATABASE_URL, ENV_PORT
 use database::connect;
 use mplat_server::cli::{Cli, Commands, install_systemd_service, update};
 use mplat_server::server::start_server;
-use tracing::info;
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 
