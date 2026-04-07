@@ -1,4 +1,4 @@
-pub mod user;
 pub mod admin;
-pub use user::*;
+pub mod user;
 pub use admin::*;
+pub use user::*;

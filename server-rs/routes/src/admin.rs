@@ -9,9 +9,7 @@ use validator::Validate;
 // 获取当前用户的辅助函数
 fn get_username(req: &actix_web::HttpRequest) -> Result<String, Error> {
     let ext = req.extensions();
-    let user = ext
-        .get::<AuthenticatedUser>()
-        .ok_or_else(|| Error::InvalidAuth)?;
+    let user = ext.get::<AuthenticatedUser>().ok_or(Error::InvalidAuth)?;
     Ok(user.username.clone())
 }
 
@@ -48,7 +46,11 @@ pub async fn change_secret(
     state: web::Data<AppState>,
     query: web::Json<ChangeSecretDto>,
 ) -> Result<impl Responder, Error> {
-    state.service.admin.change_secret(query.secret.clone()).await?;
+    state
+        .service
+        .admin
+        .change_secret(query.secret.clone())
+        .await?;
     Ok(ApiResponse::success(()))
 }
 

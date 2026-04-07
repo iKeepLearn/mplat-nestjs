@@ -73,9 +73,9 @@ fn create_server(
         let cors = Cors::default()
             .allowed_origin("http://localhost:3000") // 允许任何域名访问
             .allow_any_method() // 允许任何 HTTP 方法 (GET, POST, OPTIONS 等)
-            .allow_any_header() ;// 允许任何请求头
-           // .supports_credentials() // 允许携带 Cookie (如果需要)
-           // .max_age(3600); // 预检请求结果缓存1小时，减少请求次数
+            .allow_any_header(); // 允许任何请求头
+        // .supports_credentials() // 允许携带 Cookie (如果需要)
+        // .max_age(3600); // 预检请求结果缓存1小时，减少请求次数
         App::new()
             .wrap(cors)
             .wrap(middleware::Logger::new(

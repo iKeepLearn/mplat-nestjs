@@ -1,7 +1,6 @@
 use chrono::{TimeZone, Utc};
 use database::Repository;
 use error::Error;
-use serde_json;
 use structs::dto::admin::*;
 use tracing::error;
 use utils::date_time::format_datetime;
@@ -50,7 +49,9 @@ impl AdminService {
             return Err(Error::bad_request("用户不存在"));
         };
 
-        let password_is_match = self.verify_password(&detail.old_password, &password_hash).await?;
+        let password_is_match = self
+            .verify_password(&detail.old_password, &password_hash)
+            .await?;
         if !password_is_match {
             return Err(Error::bad_request("旧密码不正确"));
         }
@@ -101,24 +102,19 @@ impl AdminService {
     }
 
     // 解析授权方信息
-    fn parse_authorizer_info(&self, app_info: WxAuthorizerInfo) -> AuthorizerInfo {
+    pub fn parse_authorizer_info(&self, app_info: WxAuthorizerInfo) -> AuthorizerInfo {
         let func_info = app_info
             .authorization_info
             .func_info
             .iter()
             .filter_map(|item| {
-                if let Some(confirm_info) = &item.confirm_info {
-                    if confirm_info.already_confirm.unwrap_or(0) > 0 {
-                        Some(item.funcscope_category.id)
-                    } else {
-                        Some(0)
-                    }
-                } else {
-                    Some(item.funcscope_category.id)
-                }
+                let should_include = item
+                    .confirm_info
+                    .as_ref()
+                    .is_none_or(|info| info.already_confirm.unwrap_or(0) > 0);
+
+                should_include.then_some(item.funcscope_category.id.to_string())
             })
-            .filter(|&id| id > 0)
-            .map(|id| id.to_string())
             .collect::<Vec<_>>()
             .join(",");
 
@@ -215,11 +211,9 @@ impl AdminService {
                 .single()
                 .unwrap_or_else(|| Utc.with_ymd_and_hms(2022, 11, 24, 0, 0, 0).unwrap())
         });
-        let end_time = params.end_time.map(|t| {
-            Utc.timestamp_opt(t, 0)
-                .single()
-                .unwrap_or_else(Utc::now)
-        });
+        let end_time = params
+            .end_time
+            .map(|t| Utc.timestamp_opt(t, 0).single().unwrap_or_else(Utc::now));
 
         let result = self
             .repository
@@ -246,31 +240,10 @@ impl AdminService {
         &self,
         params: WxRecordsQuery,
     ) -> Result<WxRecordsResponse<WxBizRecord>, Error> {
-        let limit = params.limit.unwrap_or(15);
-        let offset = params.offset.unwrap_or(0);
-        let start_time = params.start_time.map(|t| {
-            Utc.timestamp_opt(t, 0)
-                .single()
-                .unwrap_or_else(|| Utc.with_ymd_and_hms(2022, 11, 24, 0, 0, 0).unwrap())
-        });
-        let end_time = params.end_time.map(|t| {
-            Utc.timestamp_opt(t, 0)
-                .single()
-                .unwrap_or_else(Utc::now)
-        });
-
         let result = self
             .repository
             .admin
-            .get_wx_biz_records(
-                limit,
-                offset,
-                start_time,
-                end_time,
-                params.appid,
-                params.event,
-                params.msg_type,
-            )
+            .get_wx_biz_records(params.into())
             .await?;
 
         let records: Vec<_> = result
@@ -322,9 +295,7 @@ impl AdminService {
         offset: Option<i64>,
         limit: Option<i64>,
     ) -> Result<CallbackProxyRuleListResponse, Error> {
-        let type_int = r#type
-            .and_then(|t| t.parse::<i32>().ok())
-            .unwrap_or(0);
+        let type_int = r#type.and_then(|t| t.parse::<i32>().ok()).unwrap_or(0);
         let offset = offset.unwrap_or(0);
         let limit = limit.unwrap_or(15);
 
@@ -362,26 +333,9 @@ impl AdminService {
         &self,
         params: AddCallbackProxyRuleDto,
     ) -> Result<(), Error> {
-        let event = params.event.unwrap_or_default();
-        let msg_type = params.msg_type.unwrap_or_default();
-        let info = params.info.unwrap_or_default();
-        let post_body = serde_json::to_string(&params.data).map_err(|e| {
-            error!("serialize post_body error: {:?}", e);
-            Error::internal("序列化数据失败")
-        })?;
-
         self.repository
             .admin
-            .add_callback_proxy_rule(
-                &params.name,
-                params.r#type,
-                &event,
-                &msg_type,
-                &info,
-                &info,
-                params.open,
-                &post_body,
-            )
+            .add_callback_proxy_rule(params.try_into()?)
             .await?;
 
         Ok(())

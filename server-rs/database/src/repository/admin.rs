@@ -1,8 +1,9 @@
 use chrono::{Duration, TimeZone, Utc};
 use error::Error;
-use sqlx::{Pool, Postgres};
-use structs::sqlx::{
-    Authorizer, CommKv, WxCallbackBizRecord, WxCallbackComponentRecord, WxCallbackRule,
+use sqlx::{Pool, Postgres, QueryBuilder};
+use structs::{
+    dto::{CallbackProxyRuleAdd, WxBizRecordsQuery},
+    sqlx::{Authorizer, CommKv, WxCallbackBizRecord, WxCallbackComponentRecord, WxCallbackRule},
 };
 use tracing::error;
 
@@ -17,12 +18,9 @@ impl AdminRepository {
     }
 
     // 更新用户密码
-    pub async fn update_password(
-        &self,
-        username: &str,
-        new_password: &str,
-    ) -> Result<(), Error> {
-        const QUERY: &str = r#"UPDATE "user_record" SET password = $1, update_time = $2 WHERE username = $3;"#;
+    pub async fn update_password(&self, username: &str, new_password: &str) -> Result<(), Error> {
+        const QUERY: &str =
+            r#"UPDATE "user_record" SET password = $1, update_time = $2 WHERE username = $3;"#;
         let now = Utc::now();
         match sqlx::query(QUERY)
             .bind(new_password)
@@ -45,7 +43,8 @@ impl AdminRepository {
         old_username: &str,
         new_username: &str,
     ) -> Result<(), Error> {
-        const QUERY: &str = r#"UPDATE "user_record" SET username = $1, update_time = $2 WHERE username = $3;"#;
+        const QUERY: &str =
+            r#"UPDATE "user_record" SET username = $1, update_time = $2 WHERE username = $3;"#;
         let now = Utc::now();
         match sqlx::query(QUERY)
             .bind(new_username)
@@ -192,7 +191,8 @@ impl AdminRepository {
 
     // 获取 component_access_token
     pub async fn get_component_access_token(&self) -> Result<Option<String>, Error> {
-        const QUERY: &str = r#"SELECT token FROM "wx_token" WHERE type = 'component_access_token';"#;
+        const QUERY: &str =
+            r#"SELECT token FROM "wx_token" WHERE type = 'component_access_token';"#;
         match sqlx::query_scalar::<_, String>(QUERY)
             .fetch_optional(&self.pool)
             .await
@@ -214,21 +214,15 @@ impl AdminRepository {
         end_time: Option<chrono::DateTime<Utc>>,
         info_type: Option<String>,
     ) -> Result<Vec<WxCallbackComponentRecord>, Error> {
+        let default_time = Utc
+            .with_ymd_and_hms(2022, 11, 24, 0, 0, 0)
+            .single()
+            .unwrap();
         let (start, end) = match (start_time, end_time) {
             (Some(s), Some(e)) => (s, e),
             (Some(s), None) => (s, Utc::now()),
-            (None, Some(e)) => (
-                Utc.with_ymd_and_hms(2022, 11, 24, 0, 0, 0)
-                    .single()
-                    .unwrap(),
-                e,
-            ),
-            (None, None) => (
-                Utc.with_ymd_and_hms(2022, 11, 24, 0, 0, 0)
-                    .single()
-                    .unwrap(),
-                Utc::now(),
-            ),
+            (None, Some(e)) => (default_time, e),
+            (None, None) => (default_time, Utc::now()),
         };
 
         let (query, bind_info_type) = if let Some(itype) = info_type {
@@ -275,75 +269,40 @@ impl AdminRepository {
     // 获取微信业务回调记录
     pub async fn get_wx_biz_records(
         &self,
-        limit: i64,
-        offset: i64,
-        start_time: Option<chrono::DateTime<Utc>>,
-        end_time: Option<chrono::DateTime<Utc>>,
-        appid: Option<String>,
-        event: Option<String>,
-        msg_type: Option<String>,
+        detail: WxBizRecordsQuery,
     ) -> Result<Vec<WxCallbackBizRecord>, Error> {
-        let (start, end) = match (start_time, end_time) {
-            (Some(s), Some(e)) => (s, e),
-            (Some(s), None) => (s, Utc::now()),
-            (None, Some(e)) => (
-                Utc.with_ymd_and_hms(2022, 11, 24, 0, 0, 0)
-                    .single()
-                    .unwrap(),
-                e,
-            ),
-            (None, None) => (
-                Utc.with_ymd_and_hms(2022, 11, 24, 0, 0, 0)
-                    .single()
-                    .unwrap(),
-                Utc::now(),
-            ),
-        };
-
         // 构建动态查询条件
-        let mut conditions = vec!["receive_time >= $1".to_string(), "receive_time <= $2".to_string()];
-        let mut binds: Vec<String> = Vec::new();
-        let mut param_index = 3;
+        let mut query_builder =
+            QueryBuilder::new(r#"SELECT * FROM "wx_callback_biz_record" WHERE "#);
 
-        if let Some(a) = &appid {
-            conditions.push(format!("appid = ${}", param_index));
-            binds.push(a.clone());
-            param_index += 1;
+        // 1. 处理固定条件
+        query_builder
+            .push("receive_time >= ")
+            .push_bind(detail.start_time);
+        query_builder
+            .push(" AND receive_time <= ")
+            .push_bind(detail.end_time);
+
+        // 2. 动态添加可选条件
+        if let Some(a) = detail.appid {
+            query_builder.push(" AND appid = ").push_bind(a);
         }
-        if let Some(e) = &event {
-            conditions.push(format!("event = ${}", param_index));
-            binds.push(e.clone());
-            param_index += 1;
+        if let Some(e) = detail.event {
+            query_builder.push(" AND event = ").push_bind(e);
         }
-        if let Some(m) = &msg_type {
-            conditions.push(format!("msg_type = ${}", param_index));
-            binds.push(m.clone());
-            param_index += 1;
-        }
-
-        let query = format!(
-            r#"
-            SELECT * FROM "wx_callback_biz_record"
-            WHERE {}
-            ORDER BY receive_time DESC
-            LIMIT ${} OFFSET ${};
-            "#,
-            conditions.join(" AND "),
-            param_index,
-            param_index + 1
-        );
-
-        let mut q = sqlx::query_as::<_, WxCallbackBizRecord>(&query)
-            .bind(start)
-            .bind(end);
-
-        for bind in binds {
-            q = q.bind(bind);
+        if let Some(m) = detail.msg_type {
+            query_builder.push(" AND msg_type = ").push_bind(m);
         }
 
-        q = q.bind(limit).bind(offset);
+        // 3. 添加排序、分页
+        query_builder.push(" ORDER BY receive_time DESC ");
+        query_builder.push(" LIMIT ").push_bind(detail.limit);
+        query_builder.push(" OFFSET ").push_bind(detail.offset);
 
-        match q.fetch_all(&self.pool).await {
+        // 4. 构建查询
+        let query = query_builder.build_query_as::<WxCallbackBizRecord>();
+
+        match query.fetch_all(&self.pool).await {
             Err(err) => {
                 error!("get_wx_biz_records error: {:?}", &err);
                 Err(err.into())
@@ -354,7 +313,8 @@ impl AdminRepository {
 
     // 获取代理配置
     pub async fn get_proxy_config(&self) -> Result<Vec<CommKv>, Error> {
-        const QUERY: &str = r#"SELECT key, value FROM "comm_kv" WHERE key IN ('proxy_state', 'proxy_port');"#;
+        const QUERY: &str =
+            r#"SELECT key, value FROM "comm_kv" WHERE key IN ('proxy_state', 'proxy_port');"#;
         match sqlx::query_as::<_, CommKv>(QUERY)
             .fetch_all(&self.pool)
             .await
@@ -368,11 +328,7 @@ impl AdminRepository {
     }
 
     // 更新代理配置
-    pub async fn update_proxy_config(
-        &self,
-        open: &str,
-        port: &str,
-    ) -> Result<(), Error> {
+    pub async fn update_proxy_config(&self, open: &str, port: &str) -> Result<(), Error> {
         let mut tx = self.pool.begin().await?;
 
         const QUERY_STATE: &str = r#"
@@ -436,14 +392,7 @@ impl AdminRepository {
     // 添加回调代理规则
     pub async fn add_callback_proxy_rule(
         &self,
-        name: &str,
-        r#type: i32,
-        event: &str,
-        msg_type: &str,
-        info_type: &str,
-        info: &str,
-        open: i32,
-        post_body: &str,
+        detail: CallbackProxyRuleAdd,
     ) -> Result<WxCallbackRule, Error> {
         const QUERY: &str = r#"
         INSERT INTO "wx_callback_rule"
@@ -453,14 +402,14 @@ impl AdminRepository {
         "#;
         let now = Utc::now();
         match sqlx::query_as::<_, WxCallbackRule>(QUERY)
-            .bind(name)
-            .bind(r#type)
-            .bind(msg_type)
-            .bind(event)
-            .bind(info_type)
-            .bind(info)
-            .bind(open)
-            .bind(post_body)
+            .bind(detail.name)
+            .bind(detail.r#type)
+            .bind(detail.msg_type)
+            .bind(detail.event)
+            .bind(detail.info_type)
+            .bind(detail.info)
+            .bind(detail.open)
+            .bind(detail.post_body)
             .bind(now)
             .bind(now)
             .fetch_one(&self.pool)
@@ -593,11 +542,7 @@ impl AdminRepository {
     // 删除回调代理规则
     pub async fn delete_callback_proxy_rule(&self, id: i32) -> Result<(), Error> {
         const QUERY: &str = r#"DELETE FROM "wx_callback_rule" WHERE id = $1;"#;
-        match sqlx::query(QUERY)
-            .bind(id)
-            .execute(&self.pool)
-            .await
-        {
+        match sqlx::query(QUERY).bind(id).execute(&self.pool).await {
             Err(err) => {
                 error!("delete_callback_proxy_rule error: {:?}", &err);
                 Err(err.into())

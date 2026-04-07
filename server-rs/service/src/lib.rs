@@ -1,9 +1,9 @@
-mod user;
 mod admin;
+mod user;
 use user::Service as UserService;
 
-pub use user::{AuthenticatedUser, TokenPlayload};
 pub use admin::AdminService;
+pub use user::{AuthenticatedUser, TokenPlayload};
 
 #[derive(Debug, Clone)]
 pub struct Service {

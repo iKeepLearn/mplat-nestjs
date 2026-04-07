@@ -1,10 +1,10 @@
-mod user;
 mod admin;
+mod user;
 
+use admin::AdminRepository;
 use sqlx::{Pool, Postgres};
 use std::sync::Arc;
 use user::UserRepository;
-use admin::AdminRepository;
 
 #[derive(Debug)]
 pub struct Repository(Arc<RepositoryInner>);

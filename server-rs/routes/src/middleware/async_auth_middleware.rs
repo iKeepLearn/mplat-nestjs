@@ -7,7 +7,10 @@ use actix_web::{
     middleware::Next,
     web::Data,
 };
-use actix_web::{http::{StatusCode,Method}, web};
+use actix_web::{
+    http::{Method, StatusCode},
+    web,
+};
 use error::ErrorResponse;
 use jsonwebtoken::{DecodingKey, TokenData, Validation};
 use service::{AuthenticatedUser, TokenPlayload};
@@ -49,7 +52,7 @@ pub async fn async_auth_middleware(
     next: Next<impl MessageBody>,
 ) -> Result<ServiceResponse<impl MessageBody>, Error> {
     let req_path = req.path();
-     if req.method() == Method::OPTIONS {
+    if req.method() == Method::OPTIONS {
         return next.call(req).await;
     }
     let should_check = constants::IGNORE_ROUTES
