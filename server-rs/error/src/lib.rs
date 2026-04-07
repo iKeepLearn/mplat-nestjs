@@ -4,7 +4,8 @@ use jsonwebtoken::errors::Error as JwtError;
 use serde::Serialize;
 use std::convert::Infallible;
 use thiserror::Error;
-use tracing::info;
+use tracing::error;
+use wechat_third_platform::error::Error as WtpError;
 
 #[derive(Error, Debug, Clone)]
 pub enum Error {
@@ -63,7 +64,7 @@ impl ErrorResponse {
 
 impl From<sqlx::migrate::MigrateError> for Error {
     fn from(err: sqlx::migrate::MigrateError) -> Self {
-        info!("MigrateError: {:?}", err);
+        error!("MigrateError: {:?}", err);
         Error::Internal("Internal Server Error".into())
     }
 }
@@ -76,7 +77,7 @@ impl From<std::num::ParseIntError> for Error {
 
 impl From<sqlx::Error> for Error {
     fn from(err: sqlx::Error) -> Self {
-        info!("Sqlx Error: {:?}", err);
+        error!("Sqlx Error: {:?}", err);
         match err {
             sqlx::Error::RowNotFound => Error::NotFound("row not exists".into()),
             _ => Error::Internal("Sqlx Error".into()),
@@ -129,7 +130,7 @@ impl ResponseError for Error {
 
 impl From<JwtError> for Error {
     fn from(value: JwtError) -> Self {
-        info!("JwtError: {:?}", value);
+        error!("JwtError: {:?}", value);
         Error::InvalidAuth
     }
 }
@@ -182,5 +183,12 @@ impl From<validator::ValidationErrors> for Error {
         let message = error_messages.join(",");
 
         Error::invalid_arg(&message)
+    }
+}
+
+impl From<WtpError> for Error {
+    fn from(value: WtpError) -> Self {
+        error!("wechat third platform: {:?}", value);
+        Error::internal("internal error")
     }
 }

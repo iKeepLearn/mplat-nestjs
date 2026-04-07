@@ -15,3 +15,4 @@ systemd-service.workspace = true
 strum.workspace = true
 validator.workspace = true
 tracing.workspace = true
+wechat-third-platform.workspace = true

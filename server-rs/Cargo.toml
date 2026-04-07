@@ -10,7 +10,8 @@ members = [
     "server", 
     "service",
     "structs", 
-    "utils", 
+    "utils",
+    "wechat-third-platform", 
 ]
 
 [workspace.dependencies]
@@ -42,7 +43,13 @@ dashmap = { version = "6.1.0" }
 bcrypt = "0.19"
 rust_decimal = "1.35"
 itertools = "0.14"
-
+aes = "0.8.4"
+cipher = "0.5.1"
+cbc = "0.1.2"
+sha1 = "0.11.0"
+base64 = "0.22.1"
+rand = "0.10.0"
+hex = "0.4.3"
 
 
 database = { path = "./database" }
@@ -53,6 +60,7 @@ config = { path = "./config" }
 actix-extensible-rate-limit = { path = "./actix-extensible-rate-limit" }
 routes = { path = "./routes" }
 structs = { path = "./structs"  }
+wechat-third-platform = { path = "./wechat-third-platform"  }
 
 [profile.release]
 opt-level = 'z'    # Optimize for size

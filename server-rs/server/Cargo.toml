@@ -32,6 +32,7 @@ config.workspace = true
 routes.workspace = true
 actix-extensible-rate-limit.workspace = true
 lazy_static.workspace = true
+wechat-third-platform.workspace = true
 
 tracing-bunyan-formatter = "0.3.1"
 tracing-actix-web = "0.7"
