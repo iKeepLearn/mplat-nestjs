@@ -1,11 +1,14 @@
 mod admin;
+mod comm_kv;
 mod user;
 mod wxcallback;
 
 use admin::AdminRepository;
+use comm_kv::CommKvRepository;
 use sqlx::{Pool, Postgres};
 use std::sync::Arc;
 use user::UserRepository;
+use wxcallback::WxCallbackRepository;
 
 #[derive(Debug)]
 pub struct Repository(Arc<RepositoryInner>);
@@ -14,7 +17,8 @@ pub struct Repository(Arc<RepositoryInner>);
 pub struct RepositoryInner {
     pub user: UserRepository,
     pub admin: AdminRepository,
-    pub wxcallback: wxcallback::WxCallbackRepository,
+    pub wxcallback: WxCallbackRepository,
+    pub comm_kv: CommKvRepository,
 }
 
 impl Clone for Repository {
@@ -36,7 +40,8 @@ impl Repository {
         let inner = RepositoryInner {
             user: UserRepository::new(pool.clone()),
             admin: AdminRepository::new(pool.clone()),
-            wxcallback: wxcallback::WxCallbackRepository::new(pool.clone()),
+            wxcallback: WxCallbackRepository::new(pool.clone()),
+            comm_kv: CommKvRepository::new(pool),
         };
 
         Repository(Arc::new(inner))

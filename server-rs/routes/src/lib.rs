@@ -1,4 +1,5 @@
 mod admin;
+mod auth_page;
 mod user;
 mod wxcallback;
 
@@ -8,6 +9,7 @@ use crate::middleware::rate_limit::RateLimit;
 use actix_web::web;
 use actix_web::{HttpRequest, HttpResponse, Responder, http::header::ContentType};
 use admin::configure_admin_routes;
+use auth_page::configure_auth_page_routes;
 use chrono::{TimeZone, Utc};
 use config::AppConfig;
 use database::Repository;
@@ -176,5 +178,6 @@ impl<T: Serialize> Responder for ApiResponse<T> {
 pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
     configure_admin_routes(cfg, rate_limit);
     configure_wxcallback_routes(cfg);
+    configure_auth_page_routes(cfg, rate_limit);
     configure_auth_routes(cfg, rate_limit);
 }

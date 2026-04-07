@@ -1,6 +1,8 @@
 mod admin;
+mod auth_page;
 mod user;
 mod wxcallback;
+use auth_page::AuthPageService;
 use user::Service as UserService;
 
 pub use admin::AdminService;
@@ -12,6 +14,7 @@ pub struct Service {
     pub user: UserService,
     pub admin: AdminService,
     pub wxcallback: WxCallbackService,
+    pub auth_page: AuthPageService,
 }
 
 impl Service {
@@ -19,7 +22,8 @@ impl Service {
         Service {
             user: UserService::new(repo.clone()),
             admin: AdminService::new(repo.clone()),
-            wxcallback: WxCallbackService::new(repo),
+            wxcallback: WxCallbackService::new(repo.clone()),
+            auth_page: AuthPageService::new(repo),
         }
     }
 }

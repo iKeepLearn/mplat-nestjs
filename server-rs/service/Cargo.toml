@@ -20,3 +20,4 @@ serde_json.workspace = true
 bcrypt.workspace = true
 roxmltree.workspace = true
 wechat-third-platform.workspace = true
+config.workspace = true

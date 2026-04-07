@@ -3234,6 +3234,7 @@ dependencies = [
  "actix-web",
  "bcrypt",
  "chrono",
+ "config",
  "database",
  "error",
  "itertools",
