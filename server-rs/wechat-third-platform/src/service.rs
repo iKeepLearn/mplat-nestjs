@@ -6,6 +6,7 @@ use rand::Rng;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use sha1::{Digest, Sha1};
+use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::Mutex;
 
@@ -13,11 +14,12 @@ pub type Aes256CbcEnc = cbc::Encryptor<aes::Aes256>;
 pub type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
 
 /// 微信服务核心类
+#[derive(Debug, Clone)]
 pub struct WxService<S: WxStorage> {
     pub config: Config,
     pub storage: S,
     pub http_client: Client,
-    pub refresh_lock: Mutex<()>,
+    pub refresh_lock: Arc<Mutex<()>>,
 }
 
 impl<S: WxStorage> WxService<S> {
@@ -26,7 +28,7 @@ impl<S: WxStorage> WxService<S> {
             config,
             storage,
             http_client: Client::new(),
-            refresh_lock: Mutex::new(()),
+            refresh_lock: Arc::new(Mutex::new(())),
         }
     }
 

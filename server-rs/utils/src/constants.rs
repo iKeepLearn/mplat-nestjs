@@ -10,6 +10,6 @@ pub const AUTHORIZATION: &str = "Authorization";
 pub const EMPTY: &str = "";
 
 // ignore routes - no auth required for these endpoints
-pub const IGNORE_ROUTES: [&str; 2] = ["/api/auth", "/api/auth/signup"];
+pub const IGNORE_ROUTES: [&str; 3] = ["/api/auth", "/api/auth/signup", "/api/wxcallback"];
 
 pub const EMPTY_STR: &str = "";

@@ -3,6 +3,7 @@ mod services;
 pub mod error;
 pub mod service;
 pub mod util;
+pub mod xml_parser;
 
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64_STD};
 use error::Error;

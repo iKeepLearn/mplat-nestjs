@@ -36,3 +36,9 @@ impl From<SystemTimeError> for Error {
         Error::Config(value.to_string())
     }
 }
+
+impl From<roxmltree::Error> for Error {
+    fn from(err: roxmltree::Error) -> Self {
+        Error::Config(format!("XML parse error: {}", err))
+    }
+}

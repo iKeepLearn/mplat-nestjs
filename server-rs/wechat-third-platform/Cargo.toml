@@ -18,3 +18,4 @@ hex.workspace = true
 async-trait.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
+roxmltree.workspace = true

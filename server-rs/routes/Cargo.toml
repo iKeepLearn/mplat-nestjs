@@ -27,6 +27,8 @@ structs.workspace = true
 futures-util.workspace = true
 tokio.workspace = true
 dashmap.workspace = true
+wechat-third-platform.workspace = true
+async-trait.workspace = true
 
 enum-map = { version = "2.7" }
 serde_qs = { version = "1.1.0", features = ["actix-web4", "actix4"]}

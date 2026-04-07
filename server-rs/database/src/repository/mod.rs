@@ -1,5 +1,6 @@
 mod admin;
 mod user;
+mod wxcallback;
 
 use admin::AdminRepository;
 use sqlx::{Pool, Postgres};
@@ -13,6 +14,7 @@ pub struct Repository(Arc<RepositoryInner>);
 pub struct RepositoryInner {
     pub user: UserRepository,
     pub admin: AdminRepository,
+    pub wxcallback: wxcallback::WxCallbackRepository,
 }
 
 impl Clone for Repository {
@@ -34,6 +36,7 @@ impl Repository {
         let inner = RepositoryInner {
             user: UserRepository::new(pool.clone()),
             admin: AdminRepository::new(pool.clone()),
+            wxcallback: wxcallback::WxCallbackRepository::new(pool.clone()),
         };
 
         Repository(Arc::new(inner))

@@ -13,3 +13,4 @@ serde_json.workspace = true
 structs.workspace = true
 tokio.workspace = true
 tracing.workspace = true
+wechat-third-platform.workspace = true
