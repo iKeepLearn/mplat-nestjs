@@ -1,5 +1,8 @@
 use clap::Parser;
-use config::{AppConfig, DEFAULT_DB_URL, DEFAULT_PORT, ENV_DATABASE_URL, ENV_PORT};
+use config::{
+    AppConfig, DEFAULT_DB_URL, DEFAULT_FRONT_END_HOST, DEFAULT_PORT, ENV_DATABASE_URL,
+    ENV_FRONT_END_HOST, ENV_PORT,
+};
 use database::connect;
 use mplat_server::cli::{Cli, Commands, install_systemd_service, update};
 use mplat_server::server::start_server;
@@ -19,11 +22,10 @@ async fn main() -> Result<(), error::Error> {
         .ok()
         .map_or(Ok(DEFAULT_PORT), |env_val| env_val.parse::<u16>())?;
 
-    let database_url = std::env::var(ENV_DATABASE_URL)
-        .ok()
-        .map_or(Ok(DEFAULT_DB_URL.to_string()), |env_val| {
-            env_val.parse::<String>()
-        })?;
+    let database_url = std::env::var(ENV_DATABASE_URL).unwrap_or(DEFAULT_DB_URL.to_string());
+
+    let front_end_host =
+        std::env::var(ENV_FRONT_END_HOST).unwrap_or(DEFAULT_FRONT_END_HOST.to_string());
 
     let db_pool = connect(&database_url).await?;
     let config = AppConfig::load(&db_pool).await?;
@@ -32,7 +34,7 @@ async fn main() -> Result<(), error::Error> {
 
     match cli.command {
         Commands::Run => {
-            start_server(config, db_pool, port).await?;
+            start_server(config, db_pool, port, front_end_host).await?;
         }
         Commands::Install {
             bin,

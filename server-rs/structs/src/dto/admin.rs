@@ -6,6 +6,7 @@ use tracing::error;
 use validator::Validate;
 
 #[derive(Deserialize, Validate)]
+#[serde(rename = "camelCase")]
 pub struct ChangePwdDto {
     #[validate(length(min = 1, message = "请确认旧密码是否正确"))]
     pub old_password: String,

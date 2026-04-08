@@ -37,8 +37,8 @@ pub async fn verify_token(
 
 fn invalid_auth() -> Error {
     let error_response = ErrorResponse::new(
-        constants::MESSAGE_UNAUTHORIZED,
         StatusCode::UNAUTHORIZED.as_u16(),
+        constants::MESSAGE_UNAUTHORIZED,
     );
     InternalError::from_response(
         constants::MESSAGE_UNAUTHORIZED,

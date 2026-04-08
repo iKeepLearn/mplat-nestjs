@@ -14,7 +14,8 @@ pub struct AppConfig {
 
 pub const ENV_DATABASE_URL: &str = "DATABASE_URL";
 pub const ENV_PORT: &str = "PORT";
-
+pub const ENV_FRONT_END_HOST: &str = "FRONT_END_HOST";
+pub const DEFAULT_FRONT_END_HOST: &str = "http://localhost:3000";
 pub const DEFAULT_PORT: u16 = 9999;
 pub const DEFAULT_DB_URL: &str = "postgresql://postgres:123@localhost:5432/mplat";
 

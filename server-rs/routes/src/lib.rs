@@ -20,7 +20,7 @@ use structs::sqlx::{CommKv, WxToken};
 use tracing::error;
 use user::configure_auth_routes;
 use wechat_third_platform::WxStorage;
-use wechat_third_platform::error::Error;
+use wechat_third_platform::error::Error as WtpError;
 use wechat_third_platform::service::WxService;
 use wxcallback::configure_wxcallback_routes;
 
@@ -44,7 +44,7 @@ impl PostgresqlDb {
 
 #[async_trait::async_trait]
 impl WxStorage for PostgresqlDb {
-    async fn get_ticket(&self) -> Result<String, Error> {
+    async fn get_ticket(&self) -> Result<String, WtpError> {
         const QUERY: &str = r#"SELECT * FROM "comm_kv" WHERE key = $1;"#;
         match sqlx::query_as::<_, CommKv>(QUERY)
             .bind("ticket")
@@ -53,13 +53,13 @@ impl WxStorage for PostgresqlDb {
         {
             Err(err) => {
                 error!("get ticket error: {:?}", &err);
-                Err(Error::Config("no ticket".to_string()))
+                Err(WtpError::Config("no ticket".to_string()))
             }
             Ok(res) => Ok(res.value),
         }
     }
 
-    async fn get_component_token(&self, appid: &str) -> Result<Option<(String, u64)>, Error> {
+    async fn get_component_token(&self, appid: &str) -> Result<Option<(String, u64)>, WtpError> {
         const QUERY: &str = "SELECT * FROM wx_token WHERE appid = $1 AND type = $2";
 
         match sqlx::query_as::<_, WxToken>(QUERY)
@@ -74,7 +74,7 @@ impl WxStorage for PostgresqlDb {
             }
             Err(e) => {
                 error!("get component token err:{:?}", e);
-                Err(Error::Config("no component token".to_string()))
+                Err(WtpError::Config("no component token".to_string()))
             }
         }
     }
@@ -84,7 +84,7 @@ impl WxStorage for PostgresqlDb {
         appid: &str,
         token: &str,
         expire_time: u64,
-    ) -> Result<(), Error> {
+    ) -> Result<(), WtpError> {
         const QUERY: &str = "INSERT INTO wx_token (appid, type, token, expire_time) 
              VALUES ($1, $2, $3, $4)
              ON CONFLICT (appid, type) 
@@ -104,7 +104,7 @@ impl WxStorage for PostgresqlDb {
             Ok(_) => Ok(()),
             Err(e) => {
                 error!("save component token err:{:?}", e);
-                Err(Error::Config("save component token failed".to_string()))
+                Err(WtpError::Config("save component token failed".to_string()))
             }
         }
     }
@@ -132,12 +132,14 @@ pub enum ApiResponse<T> {
     Success {
         data: T,
         code: i32,
-        message: String,
+        #[serde(rename = "errorMsg")]
+        error_msg: String,
     },
     Error {
-        data: String,
+        data: Option<String>,
         code: i32,
-        message: String,
+        #[serde(rename = "errorMsg")]
+        error_msg: String,
     },
 }
 
@@ -147,16 +149,16 @@ impl<T> ApiResponse<T> {
         ApiResponse::Success {
             data,
             code: 0,
-            message: "请求成功".to_string(),
+            error_msg: "请求成功".to_string(),
         }
     }
 
     // 快捷构造失败响应 (完美还原: code != 0 时, result.data = message)
     pub fn error(code: i32, message: &str) -> Self {
         ApiResponse::Error {
-            data: message.to_string(),
+            data: None,
             code,
-            message: message.to_string(),
+            error_msg: message.to_string(),
         }
     }
 }

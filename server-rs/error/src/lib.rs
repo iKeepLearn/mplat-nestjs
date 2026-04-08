@@ -1,5 +1,4 @@
 use actix_web::{HttpResponse, ResponseError, http::StatusCode, mime};
-use chrono::{DateTime, Utc};
 use jsonwebtoken::errors::Error as JwtError;
 use serde::Serialize;
 use std::convert::Infallible;
@@ -47,18 +46,39 @@ impl Error {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ErrorResponse {
-    status_code: u16,
-    timestamp: DateTime<Utc>,
-    message: String,
+    code: u16,
+    data: Option<String>,
+    #[serde(rename = "errorMsg")]
+    error_msg: String,
 }
 
 impl ErrorResponse {
-    pub fn new(message: &str, status_code: u16) -> Self {
+    pub fn new(code: u16, message: &str) -> Self {
         ErrorResponse {
-            status_code,
-            timestamp: Utc::now(),
-            message: message.to_string(),
+            code,
+            data: None,
+            error_msg: message.to_string(),
         }
+    }
+}
+
+impl ResponseError for Error {
+    fn status_code(&self) -> StatusCode {
+        StatusCode::OK
+    }
+
+    fn error_response(&self) -> HttpResponse {
+        let res = match self {
+            Error::Internal(message) => ErrorResponse::new(500, message),
+            Error::InvalidArgument(message) => ErrorResponse::new(1001, message),
+            Error::NotFound(message) => ErrorResponse::new(1001, message),
+            Error::InvalidAuth => ErrorResponse::new(1000, "invalid auth"),
+            Error::BadRequest(message) => ErrorResponse::new(400, message),
+            Error::InvalidPermission(message) => ErrorResponse::new(1000, message),
+        };
+        HttpResponse::build(self.status_code())
+            .content_type(mime::APPLICATION_JSON)
+            .json(res)
     }
 }
 
@@ -94,37 +114,6 @@ impl From<Infallible> for Error {
 impl From<Vec<u8>> for Error {
     fn from(value: Vec<u8>) -> Self {
         Error::InvalidArgument(String::from_utf8_lossy(&value).to_string())
-    }
-}
-
-impl ResponseError for Error {
-    fn status_code(&self) -> StatusCode {
-        match self {
-            Error::InvalidArgument(_) => StatusCode::BAD_REQUEST,
-            Error::NotFound(_) => StatusCode::NOT_FOUND,
-            Error::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            Error::InvalidAuth => StatusCode::UNAUTHORIZED,
-            Error::BadRequest(_) => StatusCode::BAD_REQUEST,
-            Error::InvalidPermission(_) => StatusCode::FORBIDDEN,
-        }
-    }
-
-    fn error_response(&self) -> HttpResponse {
-        let res = match self {
-            Error::Internal(message) => ErrorResponse::new(message, self.status_code().as_u16()),
-            Error::InvalidArgument(message) => {
-                ErrorResponse::new(message, self.status_code().as_u16())
-            }
-            Error::NotFound(message) => ErrorResponse::new(message, self.status_code().as_u16()),
-            Error::InvalidAuth => ErrorResponse::new("InvalidAuth", self.status_code().as_u16()),
-            Error::BadRequest(message) => ErrorResponse::new(message, self.status_code().as_u16()),
-            Error::InvalidPermission(message) => {
-                ErrorResponse::new(message, self.status_code().as_u16())
-            }
-        };
-        HttpResponse::build(self.status_code())
-            .content_type(mime::APPLICATION_JSON)
-            .json(res)
     }
 }
 
