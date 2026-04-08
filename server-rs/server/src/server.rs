@@ -47,21 +47,21 @@ pub async fn start_server(
 fn json_config() -> JsonConfig {
     JsonConfig::default().error_handler(|err, _req| {
         let error_response = ErrorResponse::new(StatusCode::BAD_REQUEST.as_u16(), &err.to_string());
-        InternalError::from_response(err, HttpResponse::BadRequest().json(error_response)).into()
+        InternalError::from_response(err, HttpResponse::Ok().json(error_response)).into()
     })
 }
 
 fn form_config() -> FormConfig {
     FormConfig::default().error_handler(|err, _req| {
         let error_response = ErrorResponse::new(StatusCode::BAD_REQUEST.as_u16(), &err.to_string());
-        InternalError::from_response(err, HttpResponse::BadRequest().json(error_response)).into()
+        InternalError::from_response(err, HttpResponse::Ok().json(error_response)).into()
     })
 }
 
 fn query_config() -> QueryConfig {
     QueryConfig::default().error_handler(|err, _req| {
         let error_response = ErrorResponse::new(StatusCode::BAD_REQUEST.as_u16(), &err.to_string());
-        InternalError::from_response(err, HttpResponse::BadRequest().json(error_response)).into()
+        InternalError::from_response(err, HttpResponse::Ok().json(error_response)).into()
     })
 }
 
